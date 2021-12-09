@@ -18,6 +18,8 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signOut,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -59,7 +61,7 @@ const myQuery = query(colRef, orderBy('createdAt'));
 //   });
 
 // real time collection data
-onSnapshot(myQuery, (snapshot) => {
+const unsubCol = onSnapshot(myQuery, (snapshot) => {
   let books = [];
   snapshot.docs.forEach((book) => {
     books.push({
@@ -99,7 +101,7 @@ deleteBookForm.addEventListener('submit', (e) => {
 // get a single document
 const docRef = doc(db, 'books', 'DlSKKCuzxmyTtgOYG7LD');
 
-onSnapshot(docRef, (doc) => {
+const unsubDoc = onSnapshot(docRef, (doc) => {
   console.log(doc.data(), doc.id);
 });
 
@@ -138,15 +140,40 @@ signupForm.addEventListener('submit', (e) => {
 const loginForm = document.querySelector('.login');
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  const email = loginForm.email.value;
+  const password = loginForm.password.value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then((credential) => {
+      // console.log('user logged in: ', credential.user);
+      loginForm.reset();
+    })
+    .catch((error) => {
+      console.log(error.message);
+    });
 });
 
 const logoutButton = document.querySelector('.logout');
 logoutButton.addEventListener('click', () => {
   signOut(auth)
     .then(() => {
-      console.log('user signed out');
+      // console.log('user signed out');
     })
     .catch((error) => {
       console.log(error.message);
     });
+});
+
+// subscribing to auth state changes
+const unsubAuth = onAuthStateChanged(auth, (user) => {
+  console.log('user status changed: ', user);
+});
+
+// unsubscribe from auth state changes
+const unsubButton = document.querySelector('.unsub');
+unsubButton.addEventListener('click', () => {
+  console.log('unsubscribed');
+  unsubCol();
+  unsubDoc();
+  unsubAuth();
 });
